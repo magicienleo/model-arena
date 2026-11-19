@@ -55,7 +55,7 @@
     A + 'postprocessing/UnrealBloomPass.js', A + 'postprocessing/OutputPass.js', A + 'postprocessing/Pass.js', A + 'postprocessing/MaskPass.js',
     A + 'shaders/CopyShader.js', A + 'shaders/LuminosityHighPassShader.js', A + 'shaders/OutputShader.js',
   ].concat(['main', 'config', 'renderer', 'assets', 'materials', 'geo', 'props', 'physics', 'player', 'leveldata', 'city', 'level',
-    'input', 'camera', 'particles', 'audio', 'ghost', 'arms', 'ui', 'bot'].map(function (n) { return 'js/' + n + '.js'; }));
+    'input', 'touch', 'gamepad', 'camera', 'particles', 'audio', 'ghost', 'arms', 'ui', 'bot'].map(function (n) { return 'js/' + n + '.js'; }));
 
   var KEY = 'lastlight.bootTries';
   function fail(err) {
