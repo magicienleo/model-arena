@@ -36,6 +36,7 @@ const NOLOCK = BOT || params.has('nolock');
 const SAVE_KEY = 'lastlight.best.v1', SETTINGS_KEY = 'lastlight.settings.v1';
 
 const ui = new UI();
+ui.bindFullscreen();
 addEventListener('error', (e) => ui.error(`${e.message}\n${e.filename || ''}:${e.lineno || ''}`));
 addEventListener('unhandledrejection', (e) => ui.error(String(e.reason && e.reason.stack || e.reason)));
 
@@ -76,7 +77,9 @@ async function boot() {
   ui.progress(0.96, 'Warming up…'); await nextFrame();
 
   // ---------------------------------------------------------------- systems
-  const input = new Input(canvas);
+  const input = new Input(canvas, ui.el.touchControls);
+  ui.setMode(input.mode);
+  input.onMode = mode => ui.setMode(mode);
   const audio = new AudioSys();
   const particles = new Particles(scene);
   const rig = new CameraRig(camera);
@@ -127,6 +130,7 @@ async function boot() {
   }
   function finishRun() {
     G.state = 'finished'; G.running = false;
+    input.clear(); ui.show(null, false);
     const prev = best;
     const newBest = !prev || G.time < prev.time;
     if (newBest) { best = { time: G.time, splits: G.splits.slice(), ghost: recorder.data.slice() }; store.set(SAVE_KEY, best); }
@@ -137,16 +141,25 @@ async function boot() {
   }
   function play() {
     audio.start(); audio.resume();
-    if (!NOLOCK) input.lock();
+    input.clear();
+    if (needsLock()) input.lock();
     G.state = 'playing'; ui.show(null); ui.hud(true); arms.setVisible(true);
   }
   function pause() {
     if (G.state !== 'playing') return;
-    G.state = 'paused'; ui.show('pause'); audio.suspend();
+    G.state = 'paused'; input.clear(); input.unlock(); ui.show('pause'); audio.suspend();
   }
+
+  const needsLock = () => !NOLOCK && input.mode === 'keyboard';
+  const toggleVision = () => {
+    settings.rv = !settings.rv; applySettings();
+    ui.toast(settings.rv ? "Runner's vision on" : "Runner's vision off", 1.1);
+  };
 
   // ---------------------------------------------------------------- UI wiring
   ui.el.start.addEventListener('click', () => { restartRun(); play(); });
+  ui.el.touchPause.addEventListener('click', pause);
+  ui.el.enableSound.addEventListener('click', () => audio.resume());
   ui.el.resume.addEventListener('click', () => { play(); });
   ui.el.toCp.addEventListener('click', () => { play(); toCheckpoint(false); });
   ui.el.restart.addEventListener('click', () => { restartRun(); play(); });
@@ -154,17 +167,17 @@ async function boot() {
   ui.el.sens.addEventListener('input', () => { settings.sens = parseFloat(ui.el.sens.value); applySettings(); });
   ui.el.vol.addEventListener('input', () => { settings.vol = parseFloat(ui.el.vol.value); applySettings(); });
   ui.el.rv.addEventListener('change', () => { settings.rv = ui.el.rv.checked; applySettings(); });
-  input.onLockChange = (locked) => { if (!locked && G.state === 'playing' && !NOLOCK) pause(); };
+  input.onLockChange = (locked) => { if (!locked && G.state === 'playing' && needsLock()) pause(); };
   // browsers refuse a new pointer lock for about a second after Esc — a click on the view grabs it again
-  canvas.addEventListener('click', () => { if (G.state === 'playing' && !input.locked && !NOLOCK) input.lock(); });
+  canvas.addEventListener('click', () => { if (G.state === 'playing' && !input.locked && needsLock()) input.lock(); });
   input.onKey = (code) => {
     if (G.state === 'playing') {
       if (code === 'KeyR') toCheckpoint(false);
-      if (code === 'KeyV') { settings.rv = !settings.rv; applySettings(); ui.toast(settings.rv ? "Runner's vision on" : "Runner's vision off", 1.1); }
-      if (code === 'Escape' || code === 'KeyP') { if (input.locked) input.unlock(); else pause(); }
+      if (code === 'KeyV') toggleVision();
+      if (code === 'Escape' || code === 'KeyP') pause();
     } else if (G.state === 'paused' && code === 'KeyP') play();
   };
-  document.addEventListener('visibilitychange', () => { if (document.hidden && G.state === 'playing') { if (input.locked) input.unlock(); else pause(); } });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
   // ---------------------------------------------------------------- gameplay events -> feedback
   function handleEvent(type, d) {
@@ -176,7 +189,7 @@ async function boot() {
       case 'land':
         audio.land(d.impact, d.kind, d.surf);
         particles.dust(p.x, p.y, p.z, Math.min(26, 3 + d.impact * 1.1 | 0), 1 + d.impact * 0.12);
-        if (d.kind === 'stumble') { G.hit = 0.6; ui.toast('Hard landing — roll with C', 1.4); }
+        if (d.kind === 'stumble') { G.hit = 0.6; ui.toast(`Hard landing — roll with ${input.mode === 'touch' ? 'SLIDE' : input.mode === 'gamepad' ? 'B / ○' : 'C'}`, 1.4); }
         break;
       case 'wallrunStart': audio.wallrunStart(); break;
       case 'wallJump': audio.wallJump(); particles.dust(p.x, p.y + 0.3, p.z, 5, 1.4); break;
@@ -221,6 +234,25 @@ async function boot() {
     requestAnimationFrame(frame);
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     G.clock += dt;
+    if (!bot && !document.hidden) {
+      const pad = input.pollPad();
+      if (!pad && input.mode === 'gamepad') {
+        input.setMode(input.defaultMode);
+        pause();
+      } else if (pad) {
+        if (G.state === 'playing') {
+          if (pad.pressed.pause) pause();
+          else {
+            if (pad.pressed.checkpoint) toCheckpoint(false);
+            if (pad.pressed.vision) toggleVision();
+            input.applyPad(dt);
+          }
+        } else if (G.state === 'paused' && pad.pressed.pause) play();
+        else ui.useMenuPad(pad.pressed);
+      }
+    }
+    // Some browsers do not count a gamepad button as a Web Audio gesture.
+    ui.soundButton(G.state === 'playing' && !!audio.ctx && audio.ctx.state !== 'running');
     if (G.state === 'playing') R.adapt((now - prevNow) / 1000);
     prevNow = now;
     const active = G.state === 'playing' || G.state === 'finished';
@@ -268,7 +300,7 @@ async function boot() {
       for (const h of level.hints) if (p.x >= h.x0 && p.x <= h.x1 && p.z >= h.z0 && p.z <= h.z1 && player.grounded) { hint = h.text; break; }
       ui.hint(G.state === 'playing' ? hint : '');
       ui.prompt(G.state === 'playing' && !!player.zipNear && player.mode !== 'zip');
-      ui.el.capture.classList.toggle('show', G.state === 'playing' && !input.locked && !NOLOCK);
+      ui.el.capture.classList.toggle('show', G.state === 'playing' && !input.locked && needsLock());
       ui.timer(G.time);
       ui.speed(speed, C.sprintSpeed + C.flowMax + 1.5);
       const prog = Math.max(G.cp / (level.cps.length - 1), Math.min(1, (level.spawn.z - p.z) / (level.spawn.z - level.finish.z)));

@@ -1,0 +1,104 @@
+/* Input overlays and viewport layout. The game's canvas and artwork stay the same. */
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+}
+#c, #touchControls { touch-action: none; }
+.screen {
+  overflow: auto;
+  overscroll-behavior: contain;
+  justify-content: safe center;
+  padding: calc(64px + var(--safe-top)) calc(14px + var(--safe-right)) calc(16px + var(--safe-bottom)) calc(14px + var(--safe-left));
+}
+.screen > * { flex-shrink: 0; }
+#play { width: auto; min-height: 44px; margin: 38px 0 0; padding: 4px 10px; background: transparent; border-color: transparent; }
+#play:focus-visible { border-color: var(--warm); animation: none; }
+.controls { grid-template-columns: auto minmax(0, auto); }
+.touch-help, .gamepad-help { display: none; }
+:root[data-input="touch"] .touch-help, :root[data-input="gamepad"] .gamepad-help { display: grid; }
+:root:is([data-input="touch"], [data-input="gamepad"]) .keyboard-controls { display: none; }
+#utilities {
+  position: fixed; top: calc(8px + var(--safe-top)); right: calc(10px + var(--safe-right));
+  display: flex; gap: 6px;
+}
+#utilities button, .touch-actions button {
+  width: auto; min-height: 44px; margin: 0; padding: 6px 10px; background: var(--ink);
+  font-size: 12px; letter-spacing: .1em; border-radius: 6px;
+}
+#utilities button:hover, #utilities button:focus-visible { border-color: var(--warm); }
+#fullscreenNotice {
+  position: fixed; top: calc(58px + var(--safe-top)); right: calc(10px + var(--safe-right));
+  max-width: min(310px, calc(100% - 20px - var(--safe-left) - var(--safe-right)));
+  padding: 10px 12px; background: #0b0d12; border: 1px solid var(--line);
+  font-size: 14px;
+}
+#fullscreenTab { display: flex; align-items: center; min-height: 44px; color: var(--warm); }
+#cpcount { top: calc(58px + var(--safe-top)); right: calc(12px + var(--safe-right)); }
+#timer, #best, #split, #falls { margin-top: var(--safe-top); }
+#falls { left: calc(12px + var(--safe-left)); }
+#speed, #hint, #rvtag { margin-bottom: var(--safe-bottom); }
+#rvtag { right: calc(12px + var(--safe-right)); }
+#hint, #toast, #capture, #prompt { white-space: normal; text-align: center; width: max-content; max-width: calc(100% - 32px - var(--safe-left) - var(--safe-right)); }
+#prompt { font-size: clamp(12px, 3.2vw, 18px); }
+#prompt kbd { margin-right: 6px; }
+
+#touchControls { position: fixed; inset: 0; pointer-events: none; user-select: none; -webkit-user-select: none; }
+.move-stick, .touch-actions button { pointer-events: auto; touch-action: none; }
+.move-stick {
+  position: absolute; left: calc(14px + var(--safe-left)); bottom: calc(16px + var(--safe-bottom));
+  width: clamp(88px, 26vmin, 128px); aspect-ratio: 1; border-radius: 50%;
+  background: var(--ink); border: 2px solid var(--line); display: grid; place-items: center;
+}
+.move-stick.sprinting { border-color: var(--warm); }
+.stick-knob { width: 34%; aspect-ratio: 1; background: rgba(255, 255, 255, .27); border: 1px solid rgba(255, 255, 255, .55); border-radius: 50%; pointer-events: none; }
+.touch-actions {
+  position: absolute; right: calc(12px + var(--safe-right)); bottom: calc(16px + var(--safe-bottom));
+  display: grid; grid-template-columns: repeat(2, auto); gap: 6px;
+}
+.touch-actions button { min-width: 48px; min-height: 48px; }
+.touch-actions .touch-zip { grid-column: 2; opacity: .7; }
+.touch-actions .touch-zip.ready, .touch-actions button.held { background: rgba(155, 78, 39, .88); border-color: var(--warm); opacity: 1; }
+:root[data-input="touch"] #speed { bottom: 4px; width: min(27vw, 160px); }
+:root[data-input="touch"] #speedNum { font-size: 10px; letter-spacing: .08em; }
+:root[data-input="touch"] #hint { top: calc(126px + var(--safe-top)); bottom: auto; font-size: 13px; padding: 6px 9px; }
+:root[data-input="touch"] #rvtag { display: none; }
+
+@media (max-width: 640px), (max-height: 600px) {
+  h1 { font-size: clamp(34px, 12vw, 120px); }
+  .sub { font-size: 12px; letter-spacing: .3em; }
+  .controls { margin-top: 22px; font-size: 13px; gap: 6px 10px; }
+  #play { margin-top: 20px; font-size: 17px; }
+  .panel { width: min(100%, 430px); min-width: 0; padding: 18px clamp(12px, 4vw, 28px); }
+  .panel h2 { font-size: 25px; margin-bottom: 10px; }
+  .panel button { min-height: 44px; font-size: 14px; letter-spacing: .13em; }
+  .row { font-size: 12px; gap: 8px; letter-spacing: .1em; }
+  .row input[type="range"] { min-width: 0; max-width: 50%; min-height: 28px; }
+  .row input[type="checkbox"] { min-width: 24px; min-height: 24px; }
+  .big { font-size: 54px; }
+  .stats { gap: 16px; font-size: 11px; letter-spacing: .1em; }
+  td { padding: 3px 5px; font-size: 13px; }
+  td:first-child { letter-spacing: .07em; font-size: 11px; }
+  #timer { top: 54px; font-size: 30px; }
+  #best { top: 89px; font-size: 11px; }
+  #split { top: 104px; font-size: 16px; }
+  #split .name { font-size: 10px; }
+  #falls, #cpcount { top: calc(62px + var(--safe-top)); font-size: 10px; letter-spacing: .1em; }
+  #falls { margin-top: 0; }
+  #falls b, #cpcount b { font-size: 19px; }
+  #toast { font-size: 17px; }
+  #hint { font-size: 13px; }
+}
+@media (orientation: landscape) and (max-height: 480px) {
+  h1 { font-size: clamp(34px, 15vh, 72px); }
+  .screen { padding-top: calc(56px + var(--safe-top)); }
+  .controls { margin-top: 13px; gap: 3px 12px; }
+  #play { margin-top: 8px; }
+  .small { margin-top: 6px; }
+  #timer { top: 6px; }
+  #best { top: 39px; }
+  #split { top: 54px; }
+  #falls { top: calc(12px + var(--safe-top)); }
+  :root[data-input="touch"] #hint { top: calc(79px + var(--safe-top)); max-width: min(62vw, 490px); }
+}

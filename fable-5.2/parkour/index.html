@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>LAST LIGHT — Rooftop Run</title>
 <style>
   :root { --warm: #ffb45e; --hot: #ff4a2b; --cool: #6fe7ff; --ink: rgba(8, 10, 14, .72); --line: rgba(255, 255, 255, .16); }
@@ -71,6 +71,7 @@
   .stats b { display: block; font-size: 26px; letter-spacing: .04em; font-weight: 600; margin-top: 3px; font-variant-numeric: tabular-nums; }
   #err { position: fixed; left: 12px; bottom: 12px; right: 12px; color: #ff8d7a; font: 13px/1.4 ui-monospace, Menlo, monospace; white-space: pre-wrap; pointer-events: none; }
 </style>
+<link rel="stylesheet" href="./controls.css">
 <script type="importmap">
 { "imports": { "three": "./vendor/three/build/three.module.js", "three/addons/": "./vendor/three/addons/" } }
 </script>
@@ -86,11 +87,11 @@
   <div id="cpcount">Checkpoint<b id="cpN">0 / 10</b></div>
   <div id="toast"></div>
   <div id="crosshair"></div>
-  <div id="prompt"><kbd>E</kbd>ZIPLINE</div>
+  <div id="prompt"><kbd id="zipKey">E</kbd>ZIPLINE</div>
   <div id="capture">Click to capture the mouse</div>
   <div id="hint"></div>
   <div id="speed"><div class="bar"><div class="fill" id="speedFill"></div></div><div class="num" id="speedNum">0 KM/H</div></div>
-  <div id="rvtag"><i></i>Runner's vision · V</div>
+  <div id="rvtag"><i></i><span id="rvKey">Runner's vision · V</span></div>
 </div>
 
 <div id="loading" class="screen">
@@ -103,7 +104,7 @@
 <div id="start" class="screen hidden">
   <h1>LAST LIGHT</h1>
   <div class="sub">Rooftop run · golden hour</div>
-  <div class="controls">
+  <div class="controls keyboard-controls">
     <span>W A S D</span><span>Move</span>
     <span>MOUSE</span><span>Look</span>
     <span>SHIFT</span><span>Sprint</span>
@@ -114,7 +115,25 @@
     <span>V</span><span>Toggle runner's vision</span>
     <span>ESC</span><span>Pause</span>
   </div>
-  <div class="cta" id="play">Click to play</div>
+  <div class="controls touch-help">
+    <span>LEFT STICK</span><span>Move · push to the edge to sprint</span>
+    <span>DRAG VIEW</span><span>Look around</span>
+    <span>JUMP</span><span>Hold for height · kick off walls</span>
+    <span>SLIDE</span><span>Tap just before landing to roll</span>
+    <span>ZIP</span><span>Grab a nearby zipline</span>
+    <span>PAUSE</span><span>Settings · last checkpoint</span>
+  </div>
+  <div class="controls gamepad-help">
+    <span>STICKS</span><span>Left to move · right to look</span>
+    <span>RT / R2 · L3</span><span>Sprint</span>
+    <span>A / ✕</span><span>Jump · hold for height · kick off walls</span>
+    <span>B / ○</span><span>Slide · roll just before a big landing</span>
+    <span>X / □</span><span>Grab a zipline</span>
+    <span>LB / L1</span><span>Back to last checkpoint</span>
+    <span>Y / △</span><span>Toggle runner's vision</span>
+    <span>MENU / OPTIONS</span><span>Pause</span>
+  </div>
+  <button type="button" class="cta" id="play">Click to play</button>
   <div class="small" id="startBest"></div>
 </div>
 
@@ -124,9 +143,9 @@
     <button id="resume">Resume</button>
     <button id="toCp">Last checkpoint</button>
     <button id="restart">Restart run</button>
-    <div class="row"><span>Mouse sensitivity</span><input id="sens" type="range" min="0.2" max="3" step="0.05" value="1"><span id="sensV">1.00</span></div>
-    <div class="row"><span>Volume</span><input id="vol" type="range" min="0" max="1" step="0.05" value="0.8"><span id="volV">80</span></div>
-    <div class="row"><span>Runner's vision</span><input id="rv" type="checkbox" checked></div>
+    <div class="row"><label for="sens">Look sensitivity</label><input id="sens" type="range" min="0.2" max="3" step="0.05" value="1"><span id="sensV">1.00</span></div>
+    <div class="row"><label for="vol">Volume</label><input id="vol" type="range" min="0" max="1" step="0.05" value="0.8"><span id="volV">80</span></div>
+    <div class="row"><label for="rv">Runner's vision</label><input id="rv" type="checkbox" checked></div>
   </div>
 </div>
 
@@ -139,6 +158,23 @@
     <table id="resSplits"></table>
     <button id="again">Run again</button>
   </div>
+</div>
+<div id="touchControls" class="hidden" aria-label="Touch controls">
+  <div class="move-stick" data-touch="move" aria-label="Move and sprint"><span class="stick-knob"></span></div>
+  <div class="touch-actions">
+    <button type="button" data-touch="use" class="touch-zip" tabindex="-1" aria-label="Grab zipline">Zip</button>
+    <button type="button" data-touch="crouch" tabindex="-1" aria-label="Slide or roll">Slide</button>
+    <button type="button" data-touch="jump" tabindex="-1">Jump</button>
+  </div>
+</div>
+<div id="utilities">
+  <button type="button" id="touchPause" class="hidden">Pause</button>
+  <button type="button" id="enableSound" class="hidden">Enable sound</button>
+  <button type="button" id="fullscreen" aria-pressed="false">Fullscreen</button>
+</div>
+<div id="fullscreenNotice" class="hidden">
+  <span id="fullscreenStatus" role="status"></span>
+  <a id="fullscreenTab" target="_blank" rel="noopener" class="hidden">Open in a new tab ↗</a>
 </div>
 <div id="err"></div>
 <script src="./js/boot.js"></script>
