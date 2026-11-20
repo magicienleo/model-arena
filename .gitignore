@@ -7,3 +7,5 @@ edupilot/uploads/*
 !edupilot/uploads/.gitkeep
 !edupilot/data/.gitkeep
 .env.local
+
+*.zip
