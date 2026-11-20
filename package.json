@@ -1,0 +1,19 @@
+{
+  "name": "model-arena-workspace",
+  "private": true,
+  "packageManager": "pnpm@10.15.0",
+  "scripts": {
+    "dev": "pnpm --filter edupilot dev",
+    "build": "pnpm --filter edupilot build",
+    "start": "pnpm --filter edupilot start",
+    "seed": "pnpm --filter edupilot seed",
+    "test": "pnpm --filter edupilot test",
+    "lint": "pnpm --filter edupilot lint",
+    "typecheck": "pnpm --filter edupilot typecheck",
+    "e2e": "pnpm --filter edupilot e2e"
+  },
+  "devDependencies": {},
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+  }
+}

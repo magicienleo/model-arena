@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: "Marianne", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --background: 220 33% 97%;
+    --foreground: 222 47% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 12%;
+    --primary: 218 66% 33%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 214 32% 95%;
+    --secondary-foreground: 222 47% 18%;
+    --muted: 216 28% 95%;
+    --muted-foreground: 218 14% 46%;
+    --accent: 37 92% 52%;
+    --accent-foreground: 220 47% 12%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 217 26% 89%;
+    --input: 217 26% 89%;
+    --ring: 218 66% 43%;
+    --radius: 0.85rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+  ::selection {
+    @apply bg-navy-200 text-navy-950;
+  }
+  /* Scrollbars discrètes */
+  ::-webkit-scrollbar { width: 9px; height: 9px; }
+  ::-webkit-scrollbar-thumb { @apply rounded-full bg-navy-200; }
+  ::-webkit-scrollbar-track { background: transparent; }
+}
+
+@layer components {
+  .surface {
+    @apply rounded-2xl border border-border/80 bg-card shadow-card;
+  }
+  .surface-hover {
+    @apply transition-all duration-200 hover:-translate-y-0.5 hover:border-navy-200 hover:shadow-lift;
+  }
+  .label-caps {
+    @apply text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground;
+  }
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+  .grid-pattern {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.11) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+  .ai-banner {
+    @apply flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900;
+  }
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-muted;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full animate-shimmer bg-gradient-to-r from-transparent via-white/70 to-transparent;
+  }
+}
+
+/* Impression des attestations et exports */
+@media print {
+  .no-print { display: none !important; }
+  body { background: white; }
+  .print-full { width: 100% !important; box-shadow: none !important; border: none !important; }
+}
