@@ -7,6 +7,8 @@
 
 ---
 
+> 📦 **Livrable prêt à l’emploi :** [`livrable-edupilot/`](livrable-edupilot/) contient l’application autonome, le guide de déploiement et une archive ZIP.
+
 ## Démarrage rapide (une commande)
 
 À la racine du dépôt :

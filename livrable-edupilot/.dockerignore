@@ -1,0 +1,16 @@
+**/node_modules
+**/.next
+**/.git
+**/.env
+**/.env.local
+**/data/*.db
+**/data/*.db-*
+**/uploads/*
+!**/uploads/.gitkeep
+**/test-results
+**/playwright-report
+benchmark.pdf
+astra-6.2
+fable-5.2
+opus-5.5
+sol-6.2

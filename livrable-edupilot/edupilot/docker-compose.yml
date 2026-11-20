@@ -1,0 +1,19 @@
+services:
+  edupilot:
+    build:
+      context: ..
+      dockerfile: edupilot/Dockerfile
+    image: edupilot:local
+    container_name: edupilot
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      AUTH_SECRET: ${AUTH_SECRET:-changez-moi-en-production-avec-une-chaine-longue}
+      SEED_PASSWORD: ${SEED_PASSWORD:-edupilot}
+      PORT: 3000
+    volumes:
+      # Persistance locale : la base SQLite et les fichiers restent sur l'hôte.
+      - ./data:/app/edupilot/data
+      - ./uploads:/app/edupilot/uploads
